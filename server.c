@@ -45,6 +45,33 @@ pthread_mutex_t lock;
 cache_element *head;
 int cache_size;
 
+int connectRemoteServer(char *host_addr, int port_num){
+    int remoteSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if(remoteSocket < 0){
+        printf("Error creating socket to connect to remote server\n");
+        return -1;
+    }
+
+    struct hostent *host = gethostbyname(host_addr);
+    if(host == NULL){
+        printf("No such host exists \n");
+        return -1;
+    }
+
+    struct sockaddr_in remote_addr;
+    bzero((char *)&remote_addr, sizeof(remote_addr));
+    remote_addr.sin_family = AF_INET;
+    remote_addr.sin_port = htons(port_num);
+
+    bcopy((char *)&host->h_addr_list[0], (char *)&remote_addr.sin_addr.s_addr, host->h_length);
+
+    if(connect(remoteSocket, (struct sockaddr *)&remote_addr, sizeof(remote_addr)) < 0){
+        printf("Error connecting to remote server\n");
+        return -1;
+    }
+    return remoteSocket;
+}
+
 int handle_request(int socket, ParsedRequest *request, char *tempReq){
     char *buf = (char *)malloc(MAX_BYTES*sizeof(char));
     strcpy(buf, "GET ");
